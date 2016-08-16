@@ -7,14 +7,29 @@ import (
 	"golang.org/x/crypto/ssh"
 )
 
-func ExecPasswordAuth(host string, port int, user string, password string, command string) (string, error) {
+type Exec interface {
+	Exec(command string) (string, error)
+}
+
+func NewPasswordAuth(host string, port int, user string, password string) (*SshExecPasswordAuth, error) {
+	return &SshExecPasswordAuth{host: host, port: port, user: user, password: password}, nil
+}
+
+type SshExecPasswordAuth struct {
+	host     string
+	port     int
+	user     string
+	password string
+}
+
+func (s *SshExecPasswordAuth) Exec(command string) (string, error) {
 	config := &ssh.ClientConfig{
-		User: user,
+		User: s.user,
 		Auth: []ssh.AuthMethod{
-			ssh.Password(password),
+			ssh.Password(s.password),
 		},
 	}
-	client, err := ssh.Dial("tcp", host+":"+strconv.Itoa(port), config)
+	client, err := ssh.Dial("tcp", s.host+":"+strconv.Itoa(s.port), config)
 	if err != nil {
 		return "", err
 	}
@@ -33,19 +48,30 @@ func ExecPasswordAuth(host string, port int, user string, password string, comma
 	return b.String(), nil
 }
 
-func ExecCertAuth(host string, port int, user string, pemCert string, command string) (string, error) {
-	signer, err := ssh.ParsePrivateKey([]byte(pemCert))
+type SshExecCertAuth struct {
+	host    string
+	port    int
+	user    string
+	pemCert string
+}
+
+func NewSshExecCertAuth(host string, port int, user string, pemCert string) (*SshExecCertAuth, error) {
+	return &SshExecCertAuth{host: host, port: port, user: user, pemCert: pemCert}, nil
+}
+
+func (s *SshExecCertAuth) Exec(command string) (string, error) {
+	signer, err := ssh.ParsePrivateKey([]byte(s.pemCert))
 	if err != nil {
 		return "", err
 	}
 
 	config := &ssh.ClientConfig{
-		User: "ubuntu",
+		User: s.user,
 		Auth: []ssh.AuthMethod{
 			ssh.PublicKeys(signer),
 		},
 	}
-	client, err := ssh.Dial("tcp", host+":"+strconv.Itoa(port), config)
+	client, err := ssh.Dial("tcp", s.host+":"+strconv.Itoa(s.port), config)
 	if err != nil {
 		return "", err
 	}

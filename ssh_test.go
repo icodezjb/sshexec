@@ -6,7 +6,12 @@ import (
 )
 
 func TestPassword(t *testing.T) {
-	resp, err := ExecPasswordAuth("127.0.0.1", 22, "root", "x", "ls -lia")
+	sshExec, err := NewPasswordAuth("127.0.0.1", 22, "root", "x")
+	if err != nil {
+		panic(err)
+	}
+
+	resp, err := sshExec.Exec("ls -lia")
 	if err != nil {
 		panic(err)
 	}
@@ -19,7 +24,13 @@ func TestCert(t *testing.T) {
 ... put you PEM cert here to test
 -----END RSA PRIVATE KEY-----    
     `
-	resp, err := ExecCertAuth("127.0.0.1", 22, "root", pemCert, "ls -lia")
+
+	sshExec, err := NewSshExecCertAuth("127.0.0.1", 22, "root", pemCert)
+	if err != nil {
+		panic(err)
+	}
+
+	resp, err := sshExec.Exec("ls -lia")
 	if err != nil {
 		panic(err)
 	}
