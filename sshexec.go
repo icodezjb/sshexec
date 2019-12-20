@@ -2,6 +2,7 @@ package sshexec
 
 import (
 	"bytes"
+	"net"
 	"strconv"
 
 	"golang.org/x/crypto/ssh"
@@ -27,6 +28,9 @@ func (s *SshExecPasswordAuth) Exec(command string) (string, error) {
 		User: s.user,
 		Auth: []ssh.AuthMethod{
 			ssh.Password(s.password),
+		},
+		HostKeyCallback: func(hostname string, remote net.Addr, key ssh.PublicKey) error {
+			return nil
 		},
 	}
 	client, err := ssh.Dial("tcp", s.host+":"+strconv.Itoa(s.port), config)
@@ -69,6 +73,9 @@ func (s *SshExecCertAuth) Exec(command string) (string, error) {
 		User: s.user,
 		Auth: []ssh.AuthMethod{
 			ssh.PublicKeys(signer),
+		},
+		HostKeyCallback: func(hostname string, remote net.Addr, key ssh.PublicKey) error {
+			return nil
 		},
 	}
 	client, err := ssh.Dial("tcp", s.host+":"+strconv.Itoa(s.port), config)
